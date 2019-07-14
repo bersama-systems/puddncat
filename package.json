@@ -1,0 +1,19 @@
+{
+  "name": "puddncat",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cryptomailsf/puddncat.git"
+  },
+  "author": "Joshua Teitelbaum",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/cryptomailsf/puddncat/issues"
+  },
+  "homepage": "https://github.com/cryptomailsf/puddncat#readme"
+}
