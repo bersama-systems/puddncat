@@ -15,5 +15,8 @@
   "bugs": {
     "url": "https://github.com/cryptomailsf/puddncat/issues"
   },
-  "homepage": "https://github.com/cryptomailsf/puddncat#readme"
+  "homepage": "https://github.com/cryptomailsf/puddncat#readme",
+  "dependencies": {
+    "express": "^4.17.1"
+  }
 }
