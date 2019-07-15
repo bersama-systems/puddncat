@@ -17,6 +17,8 @@
   },
   "homepage": "https://github.com/cryptomailsf/puddncat#readme",
   "dependencies": {
-    "express": "^4.17.1"
+    "express": "^4.17.1",
+    "pg": "^7.11.0",
+    "promise": "^8.0.3"
   }
 }
