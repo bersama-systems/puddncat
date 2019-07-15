@@ -1,154 +1,293 @@
-const express = require('express')
-const app = express()
-const Pool = require('pg').Pool
-const port = 3000
-const Promise = require('Promise')
+/*
+AutoComplete Lyft Interview question
+Joshua Teitelbaum 7/15/2019
+ */
+/*
+1. Read in number of dictionary words on each line (NUMBER)
+2. Read in the number of input words (NUMBER)
+3. Read in the dictionary (normalize to lowercase ) hereby known as {D} NOTE WHAT ABOUT INTERNATIONALIZATION LOL :P
+4. Read in the words to test relevance on set hereby known as {TW}
+5. For each W in {TW}
+   normalize W to lower case
+   find all "matches" in D, hereby known as {M}
+   sort {M} as SM
+   filter {SM} to 5
+   emit "W:\n SM[x] (IDX[x])....\n\n"
+ */
+
+const STATE_DICTIONARY_WORDS_SIZE = 0
+const STATE_INPUT_WORDS_SIZE = 1
+const STATE_INPUT_DICTIONARY = 2
+const STATE_INPUT_WORDS = 3
+
+const MAX_DICTIONARY_WORDS = 20000
+const MAX_INPUT_WORDS = 1000
+const MAX_WORD_LENGTH = 1024 //NOT SPECIFIED!!!
+
+var readline = require('readline');
+var rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+    terminal: false
+});
+
+var state = STATE_DICTIONARY_WORDS_SIZE
 
 
+var dictSize = -1
+var inputWordsSize = -1
+var wordsRead = 0
 
-const pool = new Pool({
-    host: 'localhost',
-    database: 'leeftcode',
-    port: 5432,
-})
-const  getWords = (request, response) => {
-    pool.query('SELECT * FROM test.testTable', (error, results) => {
-        if (error) {
-            throw error
+var dictionaryWordsRead = 0
+
+var theNormalizedDictionary = {}
+
+var theInput = []
+
+/*
+getDictionarySize:
+protocol:
+input string as number
+output -1 for failure
+constaints: 0 < N < 20000
+TODO: test getDictionarySize, already did by hand :P
+ */
+function getDictionarySize(strInput) {
+
+    if (!strInput) {
+        return -1
+    }
+    try {
+
+        let i =  parseInt(strInput,10)
+        if (isNaN(i)) {
+            return -1
         }
-        response.status(200).json(results.rows)
-    })
+        if (i >=  MAX_DICTIONARY_WORDS || i <= 0) {
+            return -1
+        }
+        return i
+    } catch(e) {
+        return -1
+    }
 }
 
-addWord = (word) => {
-    var p = new Promise(function (resolve,reject) {
-        pool.query('BEGIN', function(err) {
-            if (err) {
-                reject(err)
-                return
-            }
-            pool.query('INSERT INTO test.testTable (word) VALUES ($1) RETURNING *', [word], (error, results) => {
-                if (error) {
-                    pool.query('ROLLBACK', function error(e) {
-                        reject(e)
-                        return
-                    })
+/*
+getInputWordsSize:
+protocol:
+input string as number
+output -1 for failure
+constaints: 0 < N < 20000
+TODO: test getInputWordsSize, already did by hand :P
+TODO: factor above with different modalities DICT/WORD
+ */
+function getInputWordsSize(strInput) {
 
-                    reject(error);
-                    return
-                } else {
-                    pool.query('COMMIT', function f(data) {
-                        resolve(results.rows[0])
-                    })
-                }
+    if (!strInput) {
+        return -1
+    }
+    try {
 
+        let i =  parseInt(strInput,10)
+        if (isNaN(i)) {
+            return -1
+        }
+        if (i >=  MAX_INPUT_WORDS || i <= 0) {
+            return -1
+        }
+        return i
+    } catch(e) {
+        return -1
+    }
+}
+
+/*
+putLineInDictionary:
+input: line
+output: -1 fail, 0 success
+1. trim input
+2. normalize to lower case
+3. if collision WHISKEY TANGO FOXTROT return failure
+ */
+function putLineInDictionary(strLine, wordNumber) {
+    if (!strLine) {
+        return -1
+    }
+    /*
+    To grader: MAX_WORD_LENGTH must be reasonable I picked 1024 :)
+     */
+    if (strLine.length >= MAX_WORD_LENGTH) {
+        return -1
+    }
+
+    normalizedInput = strLine.trim().toLowerCase()
+
+    if (theNormalizedDictionary[normalizedInput]) {
+        return -1
+    } else {
+        theNormalizedDictionary[normalizedInput] = wordNumber
+    }
+    return 0
+}
+
+function putLineIntoInput(strLine) {
+    if (!strLine) {
+        return -1
+    }
+    /*
+    To grader: MAX_WORD_LENGTH must be reasonable I picked 1024 :)
+     */
+    if (strLine.length >= MAX_WORD_LENGTH) {
+        return -1
+    }
+
+    normalizedInput = strLine.trim()
+
+    theInput.push(normalizedInput)
+    return 0
+}
+
+/**
+ * getWordScore
+ * this needs to be filled out:
+ * input, key
+ */
+function getWordScore(strInput, strKey) {
+    /*
+    Clamp the iteration availability so you don't but either string
+    while there is a match between strInput[x] and strKey[x] increment score
+    return score
+     */
+}
+/**
+ * calculateMatches
+ * @param word
+ *
+ * returns: list of {dictionary index, score}
+ */
+function calculateMatches(word) {
+
+    output = []
+    keys = Object.keys(dictionaryWordsRead)
+
+    keys.forEach( function (item,idx) {
+        score = getWordScore(word.toLowerCase(),key)
+        if (score > 0) {
+            output.push({
+                theDictWord:key,
+                score: score,
+                idx: theNormalizedDictionary[key]
             })
-        })
-
-    })
-    return p;
-}
-
-updateWord = (word) => {
-    var p = new Promise(function (resolve,reject) {
-        pool.query('UPDATE test.testTable SET ts = NOW(), cnt = cnt + 1 WHERE word=$1 RETURNING *', [word], (error, results) => {
-            if (error) {
-                reject(error)
-                return
-            }
-
-            resolve(results.rows[0])
-
-        })
-    })
-    return p;
-}
-
-getWord = (word) => {
-    var p = new Promise(function (resolve,reject) {
-        pool.query('SELECT * FROM  test.testTable where word = $1', [word], (error, results) => {
-            if (error) {
-                reject(error)
-                return
-            }
-
-            resolve(results.rows[0])
-
-        })
-    })
-    return p;
-}
-const incrementWord = (word) => {
-
-    var p = new Promise(function (resolve,reject) {
-
-        if (!word) {
-            reject ('invalid word')
-            return
         }
 
-        pool.query('SELECT * from test.testTable WHERE word=$1', [word], (error, results) => {
-            if (error) {
-                reject(error)
-                return
-            }
-            if ((!results.rows) || (results.rows.length == 0)) {
-                addWord(word).then( function success(row) {
-                    resolve(row)
-                },
-                function error(e) {
-                    reject(e)
-                })
-            } else {
-                updateWord(word).then( function success(row) {
-                        resolve(row)
-                    },
-                    function error(e) {
-                        reject(e)
-                    })
-            }
-        })
+    })
+    return output
+}
+/**
+ * calculateAutoCompletesAndExit
+ * inputs: from above, most global...pretty sloppy :( sorry
+ * outputs: emits results to stdout
+ * Algorithm:
+ * for each input word W
+ * {
+ *     for each dictionary word d
+ *     r = calculate dictionary wordrank for w
+ *     if (r > 0) {
+ *     save word in list
+ *     }
+ *     newlist = sort unranked list and chop 5
+ *     emit "word:"
+ *     for each word in new list
+ *     {
+ *
+ *         emit dictionary (location in dictionary)
+ *     }
+ */
+function calculateAutoCompletesAndExit() {
+    theInput.forEach(function (item, index) {
 
+        l = calculateMatches(item)
+        if (l && l.length) {
+            l.sort((a, b) => (a.score > b.score) ? 1 : -1)
+        }
+
+        console.log(item + ':\n')
+        clamp = 5
+        if (l.length < 5) {
+            clamp = l.length
+        }
+        for(x = 0; x < clamp; x++) {
+            console.log(l.theDictWord + "(" + l.idx + ")\n")
+        }
+
+        if (x) {
+            console.log("\n")
+        }
     });
 
-    return p;
+
 }
-app.get('/', (request, response) => {
+rl.on('line', function(line){
 
-    getWords(request,response)
+    switch(state) {
+        case STATE_DICTIONARY_WORDS_SIZE:
+        {
+            dictSize = getDictionarySize(line)
 
-})
-
-app.get('/word/:word', (request, response) => {
-    getWord(request.params.word).then( function success(data) {
-
-        if (!data) {
-            response.status(400).json('not found')
-        } else {
-            response.status(200).json(data)
-        }
-
-    },
-    function fail(error) {
-         response.status(400).json(error)
-    })
-
-})
-
-app.post('/word/:word', (request, response) => {
-    incrementWord(request.params.word).then( function success(data) {
-
-            if (!data) {
-                response.status(400).json('not found')
-            } else {
-                response.status(200).json(data)
+            if (dictSize < 0) {
+                console.error("*****ERROR MET INVALID dictionary size", line)
+                process.exit(-1);
             }
+            /*
+            Move to next parse state
+             */
+            state = STATE_INPUT_WORDS_SIZE
+        }
+        break;
+        case STATE_INPUT_WORDS_SIZE:
+        {
+            inputWordsSize = getInputWordsSize(line)
 
-        },
-        function fail(error) {
-            response.status(400).json(error)
-        })
+            if (inputWordsSize < 0) {
+                console.error("*****ERROR MET INVALID input words size", line)
+                process.exit(-1);
+            }
+            /*
+            Move to next parse state
+             */
+            state = STATE_INPUT_DICTIONARY
+        }
+        break;
+        case STATE_INPUT_DICTIONARY:
+        {
+            res = putLineInDictionary(line,dictionaryWordsRead)
+            if (res < 0) {
+                console.error("*****ERROR MET INVALID input dictionary word", line)
+                process.exit(-1);
+            }
+            dictionaryWordsRead++;
+            if (dictionaryWordsRead === dictSize) {
+                state = STATE_INPUT_WORDS;
+            }
+        }
+        break;
 
+        case STATE_INPUT_WORDS:
+        {
+            res = putLineIntoInput(line)
+            if (res < 0) {
+                console.error("*****ERROR MET INVALID input dictionary word", line)
+                process.exit(-1);
+            }
+            wordsRead++;
+            if (wordsRead === inputWordsSize) {
+                calculateAutoCompletesAndExit()
+
+            }
+        }
+        break;
+
+
+
+    }
 })
-
-app.listen(port, () => console.log(`Example app listening on port ${port}!`))
