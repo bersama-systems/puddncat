@@ -235,7 +235,7 @@ function calculateAutoCompletesAndExit() {
         if (l.length > 0) {
             console.log(item + ':')
             for(var x = 0; l && l.length && x < clamp; x++) {
-                console.log(l[x].theDictWord + "(" + l[x].idx + ")\n")
+                console.log(l[x].theDictWord + "(" + l[x].idx + ")")
             }
 
         }
