@@ -22,15 +22,29 @@ const  getWords = (request, response) => {
 
 addWord = (word) => {
     var p = new Promise(function (resolve,reject) {
-        pool.query('INSERT INTO test.testTable (word) VALUES ($1) RETURNING *', [word], (error, results) => {
-            if (error) {
-                reject(error)
+        pool.query('BEGIN', function(err) {
+            if (err) {
+                reject(err)
                 return
             }
+            pool.query('INSERT INTO test.testTable (word) VALUES ($1) RETURNING *', [word], (error, results) => {
+                if (error) {
+                    pool.query('ROLLBACK', function error(e) {
+                        reject(e)
+                        return
+                    })
 
-            resolve (results.rows[0])
+                    reject(error);
+                    return
+                } else {
+                    pool.query('COMMIT', function f(data) {
+                        resolve(results.rows[0])
+                    })
+                }
 
-    })
+            })
+        })
+
     })
     return p;
 }
