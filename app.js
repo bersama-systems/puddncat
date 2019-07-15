@@ -158,6 +158,19 @@ function getWordScore(strInput, strKey) {
     while there is a match between strInput[x] and strKey[x] increment score
     return score
      */
+    var score = 0
+    var len = strInput.length
+    if (strInput.length > strKey.length) {
+        len = strKey.length
+    }
+    for(var x=0; x < len; x++) {
+        if (strInput[x] === strKey[x]) {
+            score++
+        } else {
+            break
+        }
+    }
+    return score
 }
 /**
  * calculateMatches
@@ -168,15 +181,18 @@ function getWordScore(strInput, strKey) {
 function calculateMatches(word) {
 
     output = []
-    keys = Object.keys(dictionaryWordsRead)
+    keys = Object.keys(theNormalizedDictionary)
+
 
     keys.forEach( function (item,idx) {
-        score = getWordScore(word.toLowerCase(),key)
+
+        score = getWordScore(word.toLowerCase(),item)
+
         if (score > 0) {
             output.push({
-                theDictWord:key,
+                theDictWord:item,
                 score: score,
-                idx: theNormalizedDictionary[key]
+                idx: theNormalizedDictionary[item]
             })
         }
 
@@ -211,21 +227,22 @@ function calculateAutoCompletesAndExit() {
             l.sort((a, b) => (a.score > b.score) ? 1 : -1)
         }
 
-        console.log(item + ':\n')
+
         clamp = 5
         if (l.length < 5) {
             clamp = l.length
         }
-        for(x = 0; x < clamp; x++) {
-            console.log(l.theDictWord + "(" + l.idx + ")\n")
+        if (l.length > 0) {
+            console.log(item + ':')
+            for(var x = 0; l && l.length && x < clamp; x++) {
+                console.log(l[x].theDictWord + "(" + l[x].idx + ")\n")
+            }
+
         }
 
-        if (x) {
-            console.log("\n")
-        }
     });
 
-
+    process.exit(0)
 }
 rl.on('line', function(line){
 
