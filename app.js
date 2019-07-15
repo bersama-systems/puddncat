@@ -158,6 +158,7 @@ function getWordScore(strInput, strKey) {
     while there is a match between strInput[x] and strKey[x] increment score
     return score
      */
+    console.log('input ', strInput)
     var score = 0
     var len = strInput.length
     if (strInput.length > strKey.length) {
@@ -224,7 +225,7 @@ function calculateAutoCompletesAndExit() {
 
         l = calculateMatches(item)
         if (l && l.length) {
-            l.sort((a, b) => (a.score > b.score) ? 1 : -1)
+            l.sort((a, b) => (a.score > b.score) ? -1 : 1)
         }
 
 
